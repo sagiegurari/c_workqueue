@@ -43,7 +43,7 @@ int main()
   // each queue owns its own background thread and its possible to create many queues in parallel.
   struct WorkQueue *queue = workqueue_new();
 
-  printf("Queue Size: %d Backlog Size: %d\n", workqueue_get_queue_size(queue), workqueue_get_backlog_size(queue));
+  printf("Queue Size: %zu Backlog Size: %zu\n", workqueue_get_queue_size(queue), workqueue_get_backlog_size(queue));
 
   for (size_t index = 0; index < 20; index++)
   {
@@ -57,11 +57,11 @@ int main()
     }
   }
 
-  printf("Backlog Size: %d\n", workqueue_get_backlog_size(queue));
+  printf("Backlog Size: %zu\n", workqueue_get_backlog_size(queue));
 
   // wait for queue to finish, queue can still be used afterwards
   workqueue_drain(queue);
-  printf("Backlog Size: %d\n", workqueue_get_backlog_size(queue));
+  printf("Backlog Size: %zu\n", workqueue_get_backlog_size(queue));
 
   // release when done
   workqueue_release(queue);
