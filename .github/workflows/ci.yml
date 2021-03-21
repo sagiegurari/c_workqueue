@@ -1,0 +1,43 @@
+name: CI
+on: [push, pull_request]
+env:
+  BUILD_TYPE: Release
+jobs:
+  ci:
+    name: CI
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Setup Env
+      run: cmake -E make_directory ${{runner.workspace}}/target
+    - name: Checkout cmake-modules
+      uses: actions/checkout@v2
+      with:
+        repository: sagiegurari/cmake-modules
+        path: target/cmake-modules
+    - name: Configure
+      shell: bash
+      working-directory: ${{runner.workspace}}/target
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+    - name: Build
+      shell: bash
+      working-directory: ${{runner.workspace}}/target
+      run: cmake --build . --config $BUILD_TYPE
+    - name: Test
+      shell: bash
+      working-directory: ${{runner.workspace}}/target
+      run: ctest -C $BUILD_TYPE --output-on-failure
+    - name: Memory Leak Test
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash
+      working-directory: ${{runner.workspace}}/target
+      run: |
+        sudo apt update
+        sudo apt install -y valgrind --fix-missing
+        for testfile in ./bin/test_*; do echo "Testing ${testfile}" && valgrind --leak-check=full --show-leak-kinds=definite,indirect,possible --error-exitcode=1 "${testfile}"; done
+
