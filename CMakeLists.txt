@@ -12,7 +12,7 @@ include("target/cmake-modules/src/utils.cmake")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_BUILD_TYPE Release)
-SET(CMAKE_C_FLAGS -pthread)
+set(CMAKE_C_FLAGS -pthread)
 if(NOT WIN32)
   set(X_CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -Wcast-align -Wunused -Wshadow -Wpedantic")
 endif()
