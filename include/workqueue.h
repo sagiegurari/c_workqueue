@@ -11,7 +11,7 @@ struct WorkQueue;
 /**
  * Creates a new work queue of default size.
  */
-struct WorkQueue *workqueue_new();
+struct WorkQueue *workqueue_new(void);
 
 /**
  * Creates a new work queue of provided size.
