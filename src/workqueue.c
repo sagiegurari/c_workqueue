@@ -7,6 +7,7 @@ struct WorkQueue
   bool            released;
   bool            started;
   bool            draining;
+  bool            busy;
   size_t          size;
   size_t          current_index;
   size_t          backlog_size;
@@ -39,7 +40,9 @@ void *_workqueue_loop(void *thread_args)
       queue->current_index = (queue->current_index + 1) % queue->size;
       queue->backlog_size--;
 
+      queue->busy = true;
       fn(args);
+      queue->busy = false;
     }
     else
     {
@@ -81,6 +84,7 @@ struct WorkQueue *workqueue_new_with_options(size_t size)
   queue->released      = false;
   queue->started       = false;
   queue->draining      = false;
+  queue->busy          = false;
   queue->size          = size > 0 ? size : WORKQUEUE_DEFAULT_QUEUE_SIZE;
   queue->backlog_size  = 0;
   queue->current_index = 0;
@@ -141,6 +145,18 @@ size_t workqueue_get_backlog_size(struct WorkQueue *queue)
   pthread_mutex_unlock(&queue->lock);
 
   return(size);
+}
+
+
+bool workqueue_is_busy(struct WorkQueue *queue)
+{
+  if (queue == NULL)
+  {
+    return(false);
+  }
+
+  // no lock to get current state without waiting
+  return(queue->busy);
 }
 
 

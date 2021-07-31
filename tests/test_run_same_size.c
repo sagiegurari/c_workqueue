@@ -1,7 +1,6 @@
 #include "test.h"
 #include "workqueue.h"
 #include <stdlib.h>
-#include <unistd.h>
 
 size_t global_counter = 0;
 

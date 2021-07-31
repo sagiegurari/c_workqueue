@@ -37,6 +37,11 @@ size_t workqueue_get_queue_size(struct WorkQueue *);
 size_t workqueue_get_backlog_size(struct WorkQueue *);
 
 /**
+ * Returns true if a function is now being invoked by the workqueue.
+ */
+bool workqueue_is_busy(struct WorkQueue *);
+
+/**
  * Adds a new function to the end of the workqueue.
  */
 bool workqueue_push(struct WorkQueue *, void (*fn)(void *), void *);
