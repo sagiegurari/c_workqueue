@@ -18,47 +18,7 @@ struct WorkQueue
   pthread_cond_t  signal;
 };
 
-
-void *_workqueue_loop(void *thread_args)
-{
-  if (thread_args == NULL)
-  {
-    return(NULL);
-  }
-
-  struct WorkQueue *queue = (struct WorkQueue *)thread_args;
-
-  while (!queue->released)
-  {
-    pthread_mutex_lock(&queue->lock);
-
-    if (queue->backlog_size)
-    {
-      void (*fn)(void *) = queue->fn_queue[queue->current_index];
-      void *args = queue->args_queue[queue->current_index];
-
-      queue->current_index = (queue->current_index + 1) % queue->size;
-      queue->backlog_size--;
-
-      queue->busy = true;
-      fn(args);
-      queue->busy = false;
-    }
-    else
-    {
-      pthread_cond_wait(&queue->signal, &queue->lock);
-    }
-
-    if (!queue->backlog_size)
-    {
-      pthread_cond_signal(&queue->signal);
-    }
-
-    pthread_mutex_unlock(&queue->lock);
-  }
-
-  return(NULL);
-}
+static void *_workqueue_loop(void *);
 
 struct WorkQueue *workqueue_new()
 {
@@ -213,5 +173,47 @@ void workqueue_drain(struct WorkQueue *queue)
   pthread_cond_wait(&queue->signal, &queue->lock);
   queue->draining = false;
   pthread_mutex_unlock(&queue->lock);
+}
+
+
+static void *_workqueue_loop(void *thread_args)
+{
+  if (thread_args == NULL)
+  {
+    return(NULL);
+  }
+
+  struct WorkQueue *queue = (struct WorkQueue *)thread_args;
+
+  while (!queue->released)
+  {
+    pthread_mutex_lock(&queue->lock);
+
+    if (queue->backlog_size)
+    {
+      void (*fn)(void *) = queue->fn_queue[queue->current_index];
+      void *args = queue->args_queue[queue->current_index];
+
+      queue->current_index = (queue->current_index + 1) % queue->size;
+      queue->backlog_size--;
+
+      queue->busy = true;
+      fn(args);
+      queue->busy = false;
+    }
+    else
+    {
+      pthread_cond_wait(&queue->signal, &queue->lock);
+    }
+
+    if (!queue->backlog_size)
+    {
+      pthread_cond_signal(&queue->signal);
+    }
+
+    pthread_mutex_unlock(&queue->lock);
+  }
+
+  return(NULL);
 }
 

@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### v0.1.2
+
+* Added static to internal functions
+
 ### v0.1.1 (2021-07-31)
 
 * New workqueue_is_busy function.
