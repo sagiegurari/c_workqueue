@@ -32,6 +32,15 @@ file(GLOB TEST_SOURCES "tests/*")
 file(GLOB COMMON_TEST_SOURCES "tests/test.*")
 file(GLOB EXAMPLE_SOURCES "examples/*.c")
 
+# lint code
+find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
+if (CMAKE_CXX_CPPCHECK)
+  add_custom_target(cppcheck ALL
+    ${CMAKE_CXX_CPPCHECK}
+    --enable=all --inline-suppr --error-exitcode=1 --suppress=missingIncludeSystem -I ./include/ ./src/*.c
+    WORKING_DIRECTORY "${X_CMAKE_PROJECT_ROOT_DIR}")
+endif()
+
 # format code
 if(DEFINED ENV{X_CMAKE_UNCRUSTIFY_ENABLED})
   add_custom_target(uncrustify ALL

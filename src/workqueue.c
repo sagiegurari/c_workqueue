@@ -199,6 +199,7 @@ static void *_workqueue_loop(void *thread_args)
 
       queue->busy = true;
       fn(args);
+      // cppcheck-suppress redundantAssignment
       queue->busy = false;
     }
     else
