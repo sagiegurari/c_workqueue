@@ -39,7 +39,7 @@ int main()
   printf("Library Examples:\n");
 
   // create new threaded work queue with default queue size
-  // workqueue_new_with_options can be used to define custom queue size
+  // workqueue_new_with_options can be used to define custom queue size and threading api.
   // each queue owns its own background thread and its possible to create many queues in parallel.
   struct WorkQueue *queue = workqueue_new();
 
