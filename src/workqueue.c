@@ -19,6 +19,11 @@ struct WorkQueue
   pthread_cond_t             signal;
 };
 
+struct WorkQueueThreadAPIContext
+{
+  pthread_t work_thread;
+};
+
 static struct WorkQueueThreadAPI *_workqueue_create_thread_api();
 static bool _workqueue_thread_api_start(struct WorkQueueThreadAPI *, void *(*fn)(void *), void *args);
 static void _workqueue_thread_api_stop(struct WorkQueueThreadAPI *);
@@ -194,11 +199,9 @@ static struct WorkQueueThreadAPI *_workqueue_create_thread_api()
 {
   struct WorkQueueThreadAPI *thread_api = malloc(sizeof(struct WorkQueueThreadAPI));
 
-  pthread_t                 work_thread;
-
   thread_api->start   = _workqueue_thread_api_start;
   thread_api->stop    = _workqueue_thread_api_stop;
-  thread_api->context = &work_thread;
+  thread_api->context = malloc(sizeof(struct WorkQueueThreadAPIContext));
 
   return(thread_api);
 }
@@ -211,9 +214,9 @@ static bool _workqueue_thread_api_start(struct WorkQueueThreadAPI *thread_api, v
     return(false);
   }
 
-  pthread_t thread = (pthread_t)thread_api->context;
+  struct WorkQueueThreadAPIContext *context = (struct WorkQueueThreadAPIContext *)thread_api->context;
 
-  return(pthread_create(&thread, NULL, fn, args) == 0);
+  return(!pthread_create(&context->work_thread, NULL, fn, args));
 }
 
 
@@ -224,9 +227,9 @@ static void _workqueue_thread_api_stop(struct WorkQueueThreadAPI *thread_api)
     return;
   }
 
-  pthread_t thread = (pthread_t)thread_api->context;
+  struct WorkQueueThreadAPIContext *context = (struct WorkQueueThreadAPIContext *)thread_api->context;
 
-  pthread_join(thread, NULL);
+  pthread_join(context->work_thread, NULL);
 }
 
 

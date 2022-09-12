@@ -7,6 +7,11 @@ static int    _test_started  = 0;
 static int    _test_stopped  = 0;
 static size_t global_counter = 0;
 
+struct WorkQueueThreadAPIContext
+{
+  pthread_t work_thread;
+};
+
 
 void _run(void *args)
 {
@@ -22,10 +27,21 @@ static bool _test_thread_api_start(struct WorkQueueThreadAPI *thread_api, void *
     return(false);
   }
 
-  pthread_t thread = (pthread_t)thread_api->context;
+  pthread_attr_t attr;
+  if (pthread_attr_init(&attr))
+  {
+    return(false);
+  }
+  if (pthread_attr_setstacksize(&attr, 16384))
+  {
+    return(false);
+  }
+
   _test_started = _test_started + 1;
 
-  return(pthread_create(&thread, NULL, fn, args) == 0);
+  struct WorkQueueThreadAPIContext *context = (struct WorkQueueThreadAPIContext *)thread_api->context;
+
+  return(!pthread_create(&context->work_thread, &attr, fn, args));
 }
 
 
@@ -36,9 +52,9 @@ static void _test_thread_api_stop(struct WorkQueueThreadAPI *thread_api)
     return;
   }
 
-  pthread_t thread = (pthread_t)thread_api->context;
+  struct WorkQueueThreadAPIContext *context = (struct WorkQueueThreadAPIContext *)thread_api->context;
 
-  pthread_join(thread, NULL);
+  pthread_join(context->work_thread, NULL);
 
   _test_stopped = _test_stopped + 1;
 }
@@ -47,11 +63,10 @@ static void _test_thread_api_stop(struct WorkQueueThreadAPI *thread_api)
 void test_impl()
 {
   struct WorkQueueThreadAPI *thread_api = malloc(sizeof(struct WorkQueueThreadAPI));
-  pthread_t                 work_thread;
 
   thread_api->start   = _test_thread_api_start;
   thread_api->stop    = _test_thread_api_stop;
-  thread_api->context = &work_thread;
+  thread_api->context = malloc(sizeof(struct WorkQueueThreadAPIContext));
 
   struct WorkQueue *queue = workqueue_new_with_options(15, thread_api);
 
