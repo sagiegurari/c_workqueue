@@ -96,6 +96,7 @@ void workqueue_release(struct WorkQueue *queue)
   free(queue->args_queue);
   if (queue->release_thread_api)
   {
+    free(queue->thread_api->context);
     free(queue->thread_api);
   }
   free(queue);

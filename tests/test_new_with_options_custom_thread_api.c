@@ -87,6 +87,9 @@ void test_impl()
   assert_size_equal(_test_started, 1);
   workqueue_release(queue);
   assert_size_equal(_test_stopped, 1);
+
+  free(thread_api->context);
+  free(thread_api);
 }
 
 
