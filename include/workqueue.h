@@ -9,6 +9,29 @@
 struct WorkQueue;
 
 /**
+ * Custom threading API used by the workqueue and provided
+ * by the caller.
+ * The API will only require to handle a single thread at a time.
+ */
+struct WorkQueueThreadAPI
+{
+  /**
+   * Creates and starts a new thread.
+   * A basic implementation can be to simply wrap the pthread_create call.
+   */
+  bool (*start)(struct WorkQueueThreadAPI *, void *(*fn)(void *), void *args);
+  /**
+   * Stops the currently running thread (if exists).
+   * A basic implementation can be to simply wrap the pthread_join call.
+   */
+  void (*stop)(struct WorkQueueThreadAPI *);
+  /**
+   * Any custom context used by the caller (not used by workqueue).
+   */
+  void *context;
+};
+
+/**
  * Creates a new work queue of default size.
  */
 struct WorkQueue *workqueue_new(void);
@@ -16,8 +39,9 @@ struct WorkQueue *workqueue_new(void);
 /**
  * Creates a new work queue of provided size.
  * If size = 0, it will use the default size.
+ * The optional thread api can be provided to gain more control over thread creation.
  */
-struct WorkQueue *workqueue_new_with_options(size_t);
+struct WorkQueue *workqueue_new_with_options(size_t, struct WorkQueueThreadAPI *);
 
 /**
  * Finishes the currently running function and releases all the

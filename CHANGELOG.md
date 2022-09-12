@@ -1,7 +1,8 @@
 ## CHANGELOG
 
-### v0.1.2
+### v0.2.0
 
+* Added thread api param for the workqueue_new_with_options function
 * Added static to internal functions
 * Adding lint checks as part of build
 
