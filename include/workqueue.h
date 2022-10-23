@@ -1,5 +1,5 @@
-#ifndef __WORKQUEUE_H__
-#define __WORKQUEUE_H__
+#ifndef WORKQUEUE_H
+#define WORKQUEUE_H
 
 #include <stdbool.h>
 #include <stddef.h>

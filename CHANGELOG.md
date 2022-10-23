@@ -5,6 +5,7 @@
 * Added thread api param for the workqueue_new_with_options function
 * Added static to internal functions
 * Adding lint checks as part of build
+* Updated header include guard macro name
 
 ### v0.1.1 (2021-07-31)
 
