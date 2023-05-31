@@ -20,6 +20,11 @@ jobs:
       with:
         repository: sagiegurari/cmake-modules
         path: target/cmake-modules
+    - name: Checkout c_thread_lock
+      uses: actions/checkout@v2
+      with:
+        repository: sagiegurari/c_thread_lock
+        path: target/c_thread_lock
     - name: Configure
       shell: bash
       working-directory: ${{runner.workspace}}/target
