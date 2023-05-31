@@ -1,6 +1,10 @@
 ## CHANGELOG
 
-### v0.2.0
+### v0.2.1
+
+* Use threadlock library to increase api stability
+
+### v0.2.0 (2022-09-12)
 
 * Added thread api param for the workqueue_new_with_options function
 * Added static to internal functions

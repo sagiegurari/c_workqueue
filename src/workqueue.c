@@ -1,3 +1,4 @@
+#include "threadlock.h"
 #include "workqueue.h"
 #include <pthread.h>
 #include <stdlib.h>
@@ -15,8 +16,7 @@ struct WorkQueue
   void                       **args_queue;
   struct  WorkQueueThreadAPI *thread_api;
   bool                       release_thread_api;
-  pthread_mutex_t            lock;
-  pthread_cond_t             signal;
+  struct ThreadLock          *lock;
 };
 
 struct WorkQueueThreadAPIContext
@@ -36,19 +36,16 @@ struct WorkQueue *workqueue_new()
 
 struct WorkQueue *workqueue_new_with_options(size_t size, struct WorkQueueThreadAPI *thread_api)
 {
-  struct WorkQueue *queue = malloc(sizeof(struct WorkQueue));
+  struct ThreadLockOptions lock_options = threadlock_new_default_options();
 
-  if (pthread_mutex_init(&queue->lock, NULL))
+  lock_options.wait_timeout_in_milliseconds = 0;
+  struct ThreadLock *lock = threadlock_new_with_options(lock_options);
+  if (lock == NULL)
   {
-    free(queue);
     return(NULL);
   }
-  if (pthread_cond_init(&queue->signal, NULL))
-  {
-    pthread_mutex_destroy(&queue->lock);
-    free(queue);
-    return(NULL);
-  }
+
+  struct WorkQueue *queue = malloc(sizeof(struct WorkQueue));
 
   queue->released           = false;
   queue->started            = false;
@@ -61,6 +58,7 @@ struct WorkQueue *workqueue_new_with_options(size_t size, struct WorkQueueThread
   queue->args_queue         = malloc(sizeof(void *) * queue->size);
   queue->thread_api         = thread_api;
   queue->release_thread_api = thread_api == NULL;
+  queue->lock               = lock;
 
   if (queue->thread_api == NULL)
   {
@@ -82,16 +80,15 @@ void workqueue_release(struct WorkQueue *queue)
   {
     // mark as released so thread will stop processing
     // the queue after finishing the current item
-    pthread_mutex_lock(&queue->lock);
+    threadlock_lock(queue->lock);
     queue->released = true;
-    pthread_cond_signal(&queue->signal);
-    pthread_mutex_unlock(&queue->lock);
+    threadlock_signal(queue->lock, false /* lock */);
+    threadlock_unlock(queue->lock);
 
     queue->thread_api->stop(queue->thread_api);
   }
 
-  pthread_mutex_destroy(&queue->lock);
-  pthread_cond_destroy(&queue->signal);
+  threadlock_release(queue->lock);
   free(queue->fn_queue);
   free(queue->args_queue);
   if (queue->release_thread_api)
@@ -121,9 +118,9 @@ size_t workqueue_get_backlog_size(struct WorkQueue *queue)
     return(0);
   }
 
-  pthread_mutex_lock(&queue->lock);
+  threadlock_lock(queue->lock);
   size_t size = queue->backlog_size;
-  pthread_mutex_unlock(&queue->lock);
+  threadlock_unlock(queue->lock);
 
   return(size);
 }
@@ -148,14 +145,14 @@ bool workqueue_push(struct WorkQueue *queue, void (*fn)(void *), void *args)
     return(false);
   }
 
-  pthread_mutex_lock(&queue->lock);
+  threadlock_lock(queue->lock);
 
   if (!queue->started)
   {
     // start the background work thread
     if (!queue->thread_api->start(queue->thread_api, _workqueue_loop, queue))
     {
-      pthread_mutex_unlock(&queue->lock);
+      threadlock_unlock(queue->lock);
       return(false);
     }
 
@@ -164,7 +161,7 @@ bool workqueue_push(struct WorkQueue *queue, void (*fn)(void *), void *args)
 
   if (queue->backlog_size == queue->size)
   {
-    pthread_mutex_unlock(&queue->lock);
+    threadlock_unlock(queue->lock);
     return(false);
   }
 
@@ -173,9 +170,9 @@ bool workqueue_push(struct WorkQueue *queue, void (*fn)(void *), void *args)
   queue->args_queue[next_index] = args;
   queue->backlog_size++;
 
-  pthread_cond_signal(&queue->signal);
+  threadlock_signal(queue->lock, false /* lock */);
 
-  pthread_mutex_unlock(&queue->lock);
+  threadlock_unlock(queue->lock);
 
   return(true);
 }
@@ -188,12 +185,12 @@ void workqueue_drain(struct WorkQueue *queue)
     return;
   }
 
-  pthread_mutex_lock(&queue->lock);
+  threadlock_lock(queue->lock);
   queue->draining = true;
-  pthread_cond_signal(&queue->signal);
-  pthread_cond_wait(&queue->signal, &queue->lock);
+  threadlock_signal(queue->lock, false /* lock */);
+  threadlock_wait(queue->lock, false /* lock */);
   queue->draining = false;
-  pthread_mutex_unlock(&queue->lock);
+  threadlock_unlock(queue->lock);
 }
 
 static struct WorkQueueThreadAPI *_workqueue_create_thread_api()
@@ -245,7 +242,7 @@ static void *_workqueue_loop(void *thread_args)
 
   while (!queue->released)
   {
-    pthread_mutex_lock(&queue->lock);
+    threadlock_lock(queue->lock);
 
     if (queue->backlog_size)
     {
@@ -262,15 +259,15 @@ static void *_workqueue_loop(void *thread_args)
     }
     else
     {
-      pthread_cond_wait(&queue->signal, &queue->lock);
+      threadlock_wait(queue->lock, false /* lock */);
     }
 
     if (!queue->backlog_size)
     {
-      pthread_cond_signal(&queue->signal);
+      threadlock_signal(queue->lock, false /* lock */);
     }
 
-    pthread_mutex_unlock(&queue->lock);
+    threadlock_unlock(queue->lock);
   }
 
   return(NULL);
