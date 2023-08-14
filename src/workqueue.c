@@ -24,12 +24,12 @@ struct WorkQueueThreadAPIContext
   pthread_t work_thread;
 };
 
-static struct WorkQueueThreadAPI *_workqueue_create_thread_api();
+static struct WorkQueueThreadAPI *_workqueue_create_thread_api(void);
 static bool _workqueue_thread_api_start(struct WorkQueueThreadAPI *, void *(*fn)(void *), void *args);
 static void _workqueue_thread_api_stop(struct WorkQueueThreadAPI *);
 static void *_workqueue_loop(void *);
 
-struct WorkQueue *workqueue_new()
+struct WorkQueue *workqueue_new(void)
 {
   return(workqueue_new_with_options(WORKQUEUE_DEFAULT_QUEUE_SIZE, NULL));
 }
@@ -193,7 +193,7 @@ void workqueue_drain(struct WorkQueue *queue)
   threadlock_unlock(queue->lock);
 }
 
-static struct WorkQueueThreadAPI *_workqueue_create_thread_api()
+static struct WorkQueueThreadAPI *_workqueue_create_thread_api(void)
 {
   struct WorkQueueThreadAPI *thread_api = malloc(sizeof(struct WorkQueueThreadAPI));
 
