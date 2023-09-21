@@ -20,6 +20,7 @@ Each queue owns a single background thread, so it is possible to create multiple
 <a name="usage"></a>
 ## Usage
 
+<!-- example source start -->
 ```c
 #include "workqueue.h"
 #include <stdio.h>
@@ -80,6 +81,7 @@ void work_fn(void *args)
   free(fn_args);
 }
 ```
+<!-- example source end -->
 
 ## Contributing
 See [contributing guide](.github/CONTRIBUTING.md)

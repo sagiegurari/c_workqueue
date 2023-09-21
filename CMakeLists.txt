@@ -78,3 +78,11 @@ utils_setup_c_all_tests(
   LIBRARIES "Test"
 )
 
+# post build steps
+add_custom_command(
+    TARGET example
+    POST_BUILD
+    COMMENT "Post Build Steps"
+    COMMAND ${CMAKE_COMMAND} -P "../post-example-build.cmake"
+)
+
