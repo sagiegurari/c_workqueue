@@ -32,7 +32,7 @@ macro(add_external_lib)
     TAG_NAME ${ARGV1}
     LIBRARY_NAME ${ARGV0}
     LIBRARY_PARENT_DIRECTORY target
-  )
+    )
 endmacro(add_external_lib)
 add_external_lib("thread_lock")
 
@@ -52,7 +52,7 @@ utils_cppcheck(INCLUDE_DIRECTORY "./include/" SOURCES "./src/*.c" WORKING_DIRECT
 utils_uncrustify(
   CONFIG_FILE "${X_CMAKE_PROJECT_ROOT_DIR}/uncrustify.cfg"
   SOURCES ${SOURCES} ${HEADER_SOURCES} ${TEST_SOURCES} ${EXAMPLE_SOURCES}
-)
+  )
 
 # create static library
 add_library(${CMAKE_PROJECT_NAME} STATIC ${SOURCES} ${THREAD_LOCK_SOURCES})
@@ -71,18 +71,20 @@ include(CTest)
 utils_setup_test_lib(
   SOURCES "${COMMON_TEST_SOURCES}"
   COMPILATION_FLAGS "${X_CMAKE_C_FLAGS}"
-)
+  )
 utils_setup_c_all_tests(
   COMPILATION_FLAGS "${X_CMAKE_C_FLAGS}"
   BINARY_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
   LIBRARIES "Test"
-)
+  )
 
-# post build steps
-add_custom_command(
+if("$ENV{X_CMAKE_DOC_STEPS}" STREQUAL "true")
+  # post build steps
+  add_custom_command(
     TARGET example
     POST_BUILD
     COMMENT "Post Build Steps"
     COMMAND ${CMAKE_COMMAND} -P "../post-example-build.cmake"
-)
+    )
+endif()
 
