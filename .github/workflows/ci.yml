@@ -14,33 +14,23 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Setup Env
-      run: cmake -E make_directory ${{runner.workspace}}/target
-    - name: Checkout cmake-modules
-      uses: actions/checkout@v2
-      with:
-        repository: sagiegurari/cmake-modules
-        path: target/cmake-modules
-    - name: Checkout c_thread_lock
-      uses: actions/checkout@v2
-      with:
-        repository: sagiegurari/c_thread_lock
-        path: target/c_thread_lock
+      run: cmake -E make_directory target
     - name: Configure
       shell: bash
-      working-directory: ${{runner.workspace}}/target
+      working-directory: target
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
     - name: Build
       shell: bash
-      working-directory: ${{runner.workspace}}/target
+      working-directory: target
       run: cmake --build . --config $BUILD_TYPE
     - name: Test
       shell: bash
-      working-directory: ${{runner.workspace}}/target
+      working-directory: target
       run: ctest -C $BUILD_TYPE --output-on-failure
     - name: Memory Leak Test
       if: matrix.os == 'ubuntu-latest'
       shell: bash
-      working-directory: ${{runner.workspace}}/target
+      working-directory: target
       run: |
         sudo apt update
         sudo apt install -y valgrind --fix-missing
